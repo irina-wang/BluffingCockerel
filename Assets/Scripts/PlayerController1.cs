@@ -285,27 +285,32 @@ public class PlayerController1 : MonoBehaviour
     {
         switch(dirFacing) { 
             case Direction.Right:
+                // Vector3.right = (1, 0, 0)
                 rb.velocity = Vector3.right * 2f * jumpVelocity;
                 break;
-            case Direction.Left:
+            case Direction.Left: // dash to left
                 rb.velocity = Vector3.right * -2f * jumpVelocity;
                 break;
             default:
+                // Vector3.up = (0, 1, 0)
                 rb.velocity = Vector3.up * 4f * jumpVelocity;
                 break;
         }
-        movement = rb.velocity;
-        rb.useGravity = false;
-        rb.mass = 1000f;
+
+        // Update velocity, use mass to balance gravity
         isDashing = true;
-        yield return new WaitForSeconds(0.125f); // dashing 
-
-        rb.mass = 10f;
-        isDashing = false;
-        rb.velocity = Vector3.zero;
+        rb.useGravity = false; // Horizontal, gravity has no effect on rigidbody
+        rb.mass = 1000f;       // Simulate collision with greater mass
         movement = rb.velocity;
-        rb.useGravity = true;
+        yield return new WaitForSeconds(0.125f); // dashing for 0.125 second
 
+        // Reset mass, velocity, and movement
+        isDashing = false;
+        rb.useGravity = true;
+        rb.mass = 10f;
+        rb.velocity = Vector3.zero;  // (0, 0, 0)
+
+        movement = rb.velocity;
     }
 
     IEnumerator Sword()
