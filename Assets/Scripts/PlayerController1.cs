@@ -243,16 +243,14 @@ public class PlayerController1 : MonoBehaviour
     }
 
    /* Allocate n seconds of attacking time */  
-    IEnumerator Knocked(float seconds)
-    {
+    IEnumerator Knocked(float seconds) {
         knocked = true;
         yield return new WaitForSeconds(seconds);
         knocked = false;
     }
 
     /* Add 5 seconds of safe buffer time when the player is killed */  
-    IEnumerator HitCooldown(int player)
-    {
+    IEnumerator HitCooldown(int player) {
         if (hitBy == player) { yield break;}
         hitBy = player;
         yield return new WaitForSeconds(5.0f);
