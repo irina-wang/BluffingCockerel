@@ -178,7 +178,11 @@ public class PlayerController1 : MonoBehaviour
                 StartCoroutine(Knocked(0.1f));  // Attacked for 0.1 second
                 rb.velocity += knockBack;       // Apply the velocity change
             }
-        } 
+        }
+        
+        ...
+    }
+    
     
         // Attack by a scream
         if (other.gameObject.tag == "Scream") {
