@@ -152,8 +152,7 @@ public class PlayerController1 : MonoBehaviour
         }
     }
    
-    void OnTriggerEnter(Collider other)
-    {
+    void OnTriggerEnter(Collider other) {
         // Hit by a bullet
         if (other.gameObject.tag == "Bullet") {
             bullet = other.gameObject.GetComponent<Bullet>();
