@@ -85,16 +85,16 @@ public class PlayerController1 : MonoBehaviour
         if (inputCooldown > 0) {
             inputCooldown -= Time.deltaTime;
         } else {
-
             // Jump + DownJump
-            if(!knocked && !isDashing) {
-                if(Input.GetAxisRaw(VerticalAxis) > 0 && IsGrounded()) {
+            if (!knocked && !isDashing) {
+                // jump from the ground
+                if (Input.GetAxisRaw(VerticalAxis) > 0 && IsGrounded()) {
                     rb.velocity = Vector3.up * jumpVelocity;
-                }else if(Input.GetAxisRaw(VerticalAxis) < 0) {
+                // falling
+                } else if (Input.GetAxisRaw(VerticalAxis) < 0) { 
                     rb.velocity = Vector3.up * -2 * jumpVelocity;
                 }
             }
-
 
             // Movement in the Air is unrestricted and clamped
             float clamped_movement = ClampMovement(Input.GetAxisRaw(HorizontalAxis)*8f);
@@ -102,17 +102,17 @@ public class PlayerController1 : MonoBehaviour
         
             RotatePlayer(Input.GetAxisRaw(HorizontalAxis));
 
-            if(rb.velocity.y < 0) {
-                movement += Vector3.up*Physics.gravity.y*(fallMultiplier - 1) * Time.deltaTime;
-            }else if(rb.velocity.y > 0 && !Input.GetButton("Jump")) {
-                movement += Vector3.up*Physics.gravity.y*(lowJumpMultiplier - 1) * Time.deltaTime;
+            if (rb.velocity.y < 0) {
+                movement += Vector3.up * Physics.gravity.y * (fallMultiplier - 1) * Time.deltaTime;
+            } else if (rb.velocity.y > 0 && !Input.GetButton("Jump")) {
+                movement += Vector3.up * Physics.gravity.y * (lowJumpMultiplier - 1) * Time.deltaTime;
             }
         
         }
 
         // Use Ability
-
-        if(Input.GetKeyDown(ActionKey) && _currStamina >= 0.5f && ability != null) {
+        if (Input.GetKeyDown(ActionKey) && _currStamina >= 0.5f 
+                                        && ability != null) {
             _currStamina -= 0.5f;
             StartCoroutine(ability());
             usedStamina = true; 
@@ -142,7 +142,7 @@ public class PlayerController1 : MonoBehaviour
                 this_new_vx = -movement.x * other_v / sum_v * 2;
                 other_new_vx = -other.gameObject.GetComponent<PlayerController1>().movement.x * this_v / sum_v * 2;
             }
-            StartCoroutine(Knocked(0.5f));
+            StartCoroutine(Knocked(0.5f)); // freeze 0.5 second
             movement = new Vector3(this_new_vx, bounceBoost, 0);
             other.gameObject.GetComponent<PlayerController1>().movement = new Vector3(other_new_vx, bounceBoost, 0);
         }
@@ -151,37 +151,55 @@ public class PlayerController1 : MonoBehaviour
 
         }
     }
+   
     void OnTriggerEnter(Collider other)
     {
-        if(other.gameObject.tag == "Bullet" && other.gameObject.GetComponent<Bullet>().playerNum != PlayerNum) {
-            Debug.Log(other.gameObject.GetComponent<Bullet>().playerNum);
-            Vector3 knockback;
-            StartCoroutine(HitCooldown(other.gameObject.GetComponent<Bullet>().playerNum));
-            Destroy(other.gameObject);
-            if(transform.position.x -other.transform.position.x > 0) {
-                knockback = (new Vector3(1, (transform.position.y - other.transform.position.y + 0.5f), 0))*jumpVelocity*0.2f;
+        // Hit by a bullet
+        if (other.gameObject.tag == "Bullet") {
+            bullet = other.gameObject.GetComponent<Bullet>();
+            if (bullet.playerNum != PlayerNum) { // hit by enemy's bullet 
+                Vector3 knockBack;
+                StartCoroutine(HitCooldown(bullet.playerNum));
+                Destroy(other.gameObject);      // destroy bullet
 
-            }else {
-                knockback = (new Vector3(1, (transform.position.y - other.transform.position.y + 0.5f), 0))*jumpVelocity*-0.2f;
+                // Tune for a minor shift on x and y axis
+                //   could be subsituted by any small number 
+                Vector3 VelChange 
+                    = new Vector3(1, (transform.position.y - other.transform.position.y + 0.5f), 0)
+                                                                                * jumpVelocity * 0.2f;
+                
+                // Player is attached from the left, positive increment
+                if (transform.position.x - other.transform.position.x > 0) {
+                    knockBack = VelChange;
+                } else {                        // negative increment
+                    knockBack = -VelChange;
+                }
 
+                StartCoroutine(Knocked(0.1f));  // Attacked for 0.1 second
+                rb.velocity += knockBack;       // Apply the velocity change
             }
-            Debug.Log(knockback);
-            StartCoroutine(Knocked(0.1f));
-            rb.velocity += knockback;
-        }
-        if(other.gameObject.tag == "Scream") {
-            Vector3 knockback;
+        } 
+    
+        // Attack by a scream
+        if (other.gameObject.tag == "Scream") {
+            Vector3 VelChange;
             StartCoroutine(HitCooldown(other.gameObject.GetComponentInParent<PlayerController1>().PlayerNum));
-            if(transform.position.x -other.transform.position.x > 0) {
-                knockback = (new Vector3(1, (transform.position.y - other.transform.position.y + 0.5f), 0))*jumpVelocity*0.5f;
-
-            }else {
-                knockback = (new Vector3(1, (transform.position.y - other.transform.position.y + 0.5f), 0))*jumpVelocity*-0.5f;
-
+            
+            // Tune for a minor shift on x and y axis
+            //   could be subsituted by any small number 
+            Vector3 baseSpeed 
+                = new Vector3(1, (transform.position.y - other.transform.position.y + 0.5f), 0) 
+                                                                              * jumpVelocity * 0.5f;
+            
+            // player is attached from the left, positive increment
+            if (transform.position.x -other.transform.position.x > 0) {
+                knockBack = VelChange;
+            } else { // negative increment
+                knockBack = -VelChange;
             }
-            Debug.Log(knockback);
+
             StartCoroutine(Knocked(1f));
-            rb.velocity += knockback;
+            rb.velocity += knockBack;
         }
 
         // ***Previous Controller Code***
@@ -221,6 +239,7 @@ public class PlayerController1 : MonoBehaviour
         }
     }
 
+   /* Allocate n seconds of attacking time */  
     IEnumerator Knocked(float seconds)
     {
         knocked = true;
@@ -228,24 +247,20 @@ public class PlayerController1 : MonoBehaviour
         knocked = false;
     }
 
+    /* Add 5 seconds of safe buffer time when the player is killed */  
     IEnumerator HitCooldown(int player)
     {
-        if(hitBy == player) {
-            yield break;
-        }
-
+        if (hitBy == player) { yield break;}
         hitBy = player;
-
         yield return new WaitForSeconds(5.0f);
 
-        hitBy = -1;
+        hitBy = -1; // remove the killer
     }
 
     /*
      * Ability Functions
      */
 
-    // TODO: Move to Abilities Script
     IEnumerator Scream()
     {
         switch(dirFacing) { 
@@ -283,7 +298,8 @@ public class PlayerController1 : MonoBehaviour
         rb.useGravity = false;
         rb.mass = 1000f;
         isDashing = true;
-        yield return new WaitForSeconds(0.125f);
+        yield return new WaitForSeconds(0.125f); // dashing 
+
         rb.mass = 10f;
         isDashing = false;
         rb.velocity = Vector3.zero;
@@ -337,13 +353,15 @@ public class PlayerController1 : MonoBehaviour
     // ClampMovement - Clamps movement so that players can't move too fast
     float ClampMovement(float input) {
         float new_input = input;
-        if(knocked || isDashing) return rb.velocity.x;
-        if(rb.velocity.y != 0) {
+        if (knocked || isDashing) return rb.velocity.x;
+        if (rb.velocity.y != 0) {
             if(input > 0 && rb.velocity.x > input) {
-                new_input = Mathf.Clamp(input+rb.velocity.x, -1000f, rb.velocity.x);
-            }else if(input < 0 && rb.velocity.x < input) {
-                new_input = Mathf.Clamp(input+rb.velocity.x, rb.velocity.x, 1000f);
-            }else if (input == 0) {
+                new_input = Mathf.Clamp(input + rb.velocity.x, -1000f, 
+                                                                rb.velocity.x);
+            } else if(input < 0 && rb.velocity.x < input) {
+                new_input = Mathf.Clamp(input+rb.velocity.x, rb.velocity.x, 
+                                                                        1000f);
+            } else if (input == 0) {
                 new_input = rb.velocity.x;
             }
         }
@@ -359,14 +377,14 @@ public class PlayerController1 : MonoBehaviour
                 transform.GetChild(2).eulerAngles.z
             );
             dirFacing = Direction.Right;
-        }else if(Input.GetAxisRaw(HorizontalAxis) < 0) {
+        } else if(Input.GetAxisRaw(HorizontalAxis) < 0) {
             transform.GetChild(2).eulerAngles = new Vector3(
                 transform.GetChild(2).eulerAngles.x,
                 90f,
                 transform.GetChild(2).eulerAngles.z
             );
             dirFacing = Direction.Left;
-        }else {
+        } else {
             transform.GetChild(2).eulerAngles = new Vector3(
                 transform.GetChild(2).eulerAngles.x,
                 0f,
