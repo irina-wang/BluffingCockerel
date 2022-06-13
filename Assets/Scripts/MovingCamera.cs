@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /*
-    Camera panning in the game scene 
-    (left --> right --> left --> right ....)
+    Camera panning horizontally in the City game scene 
 */
 public class MovingCamera : MonoBehaviour
 {
