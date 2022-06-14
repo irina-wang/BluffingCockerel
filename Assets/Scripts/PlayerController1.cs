@@ -282,6 +282,10 @@ public class PlayerController1 : MonoBehaviour
 
     }
 
+    /* 
+     * Dash Ability
+     * Double the velocity for 0.125 second on x axis
+     */
     IEnumerator Dash()
     {
         switch(dirFacing) { 
