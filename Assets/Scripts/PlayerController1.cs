@@ -152,8 +152,7 @@ public class PlayerController1 : MonoBehaviour
         }
     }
    
-    void OnTriggerEnter(Collider other)
-    {
+    void OnTriggerEnter(Collider other) {
         // Hit by a bullet
         if (other.gameObject.tag == "Bullet") {
             bullet = other.gameObject.GetComponent<Bullet>();
@@ -178,7 +177,11 @@ public class PlayerController1 : MonoBehaviour
                 StartCoroutine(Knocked(0.1f));  // Attacked for 0.1 second
                 rb.velocity += knockBack;       // Apply the velocity change
             }
-        } 
+        }
+        
+        ...
+    }
+    
     
         // Attack by a scream
         if (other.gameObject.tag == "Scream") {
@@ -240,16 +243,14 @@ public class PlayerController1 : MonoBehaviour
     }
 
    /* Allocate n seconds of attacking time */  
-    IEnumerator Knocked(float seconds)
-    {
+    IEnumerator Knocked(float seconds) {
         knocked = true;
         yield return new WaitForSeconds(seconds);
         knocked = false;
     }
 
     /* Add 5 seconds of safe buffer time when the player is killed */  
-    IEnumerator HitCooldown(int player)
-    {
+    IEnumerator HitCooldown(int player) {
         if (hitBy == player) { yield break;}
         hitBy = player;
         yield return new WaitForSeconds(5.0f);
